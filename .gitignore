@@ -1,0 +1,11 @@
+node_modules/
+dist/
+build/
+.next/
+.env
+*.log
+.DS_Store
+coverage/
+.turbo/
+prisma/generated/
+*.tsbuildinfo

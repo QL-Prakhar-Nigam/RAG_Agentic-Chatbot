@@ -1,0 +1,95 @@
+// Prisma can't natively express `vector(...)` or `tsvector` columns — those are
+// added via a hand-written migration (see prisma/migrations/) rather than
+// `prisma migrate dev` inferring them from this schema. See local/planning/04-database-schema.md.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Site {
+  id             String   @id @default(cuid())
+  name           String
+  allowedOrigins String[]
+  agentName      String?
+  agentLogoUrl   String?
+  brandColor     String?
+  personality    String?
+  createdAt      DateTime @default(now())
+
+  documents         KbDocument[]
+  chunks            KbChunk[]
+  routes            SiteRoute[]
+  conversationLogs  ConversationLog[]
+}
+
+model KbDocument {
+  id        String   @id @default(cuid())
+  siteId    String? // null = uploaded as a global/shared document
+  site      Site?    @relation(fields: [siteId], references: [id])
+  fileName  String
+  sourceUrl String?
+  createdAt DateTime @default(now())
+
+  chunks KbChunk[]
+
+  @@index([siteId])
+}
+
+model KbChunk {
+  id         String      @id @default(cuid())
+  documentId String?
+  document   KbDocument? @relation(fields: [documentId], references: [id])
+  siteId     String? // NULL = global chunk, visible to every site's retrieval
+  site       Site?       @relation(fields: [siteId], references: [id])
+
+  content               String
+  sectionPath           String?
+  summary               String?
+  hypotheticalQuestions Json?
+  chunkIndex            Int
+
+  embedding    Unsupported("vector(1536)")?
+  searchVector Unsupported("tsvector")?
+
+  @@index([siteId])
+  @@index([documentId])
+}
+
+model SiteRoute {
+  id        String   @id @default(cuid())
+  siteId    String
+  site      Site     @relation(fields: [siteId], references: [id])
+  path      String
+  label     String
+  createdAt DateTime @default(now())
+
+  embedding Unsupported("vector(1536)")?
+
+  @@index([siteId])
+}
+
+model ConversationLog {
+  id            String   @id @default(cuid())
+  siteId        String
+  site          Site     @relation(fields: [siteId], references: [id])
+  sessionId     String
+  userMessage   String
+  agentMessage  String
+  clientActions Json?
+  createdAt     DateTime @default(now())
+
+  @@index([siteId])
+  @@index([sessionId])
+}
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+}

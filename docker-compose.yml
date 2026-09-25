@@ -1,0 +1,38 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: rag_chatbot
+      POSTGRES_PASSWORD: rag_chatbot
+      POSTGRES_DB: rag_chatbot
+    ports:
+      # 5434, not 5433/5432 — both already taken by other projects on shared dev
+      # machines; pick whatever's free locally, this has no bearing on prod.
+      - "5434:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rag_chatbot -d rag_chatbot"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    # Must be redis:8 (not redis:7) — the LangGraph Redis checkpointer needs the
+    # RedisJSON/RediSearch modules, bundled by default only from 8.0 onward.
+    # See local/planning/05-setup.md.
+    image: redis:8
+    ports:
+      # 6380, not 6379 — already taken by other projects on shared dev machines.
+      - "6380:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:
+  redisdata:
