@@ -44,6 +44,18 @@ workspaces.
 - **Production-readiness is built in per route, not retrofitted**: try/catch + structured error
   responses, timeout-bounded provider calls, per-session/IP rate limiting, origin allowlisting, strict
   `.env.example` discipline.
+- **`@rag-chatbot/shared` resolves to its TS source** (`main`/`types` point at `src/index.ts`, not a
+  built `dist/`) — see `01-architecture.md`'s package-resolution principle. Next.js needs
+  `transpilePackages` for this (already set in `packages/admin/next.config.mjs`); `tsx` (api's dev/CLI
+  scripts) resolves it natively. **Not yet solved: production `node dist/index.js`** (plain Node, no
+  loader) can't execute a `.ts` file — a real build step for workspace packages is needed before
+  `packages/api`'s `build`/`start` scripts are actually deployable. Revisit before Phase 7 or first
+  deploy, whichever comes first.
+- **The hybrid chunker's tokenizer is checked into the repo** at `packages/api/models/chunk-tokenizer.json`
+  (all-MiniLM-L6-v2's, ~0.5MB from `docling.rs`'s own model-download script) and referenced by an
+  absolute path in `kb/parse.ts` — deliberately not cwd-relative, and small enough not to need the
+  fetch-at-install pattern the PDF/OCR ONNX models use. PDF/image ingestion isn't wired up yet — that
+  needs the separate (large) ONNX model download `docling.rs`'s README describes, not done in Phase 1.
 
 ## Repo layout
 
@@ -60,8 +72,8 @@ prisma/     ← schema.prisma + hand-written migrations (vector/tsvector columns
 
 See `local/planning/06-phased-plan.md` for full detail and exit criteria.
 
-0. Repo scaffold — **current phase**
-1. RAG core (ingestion, hybrid retrieval, eval harness, minimal `retrieve → respond` graph)
+0. Repo scaffold — done
+1. RAG core (ingestion, hybrid retrieval, eval harness, minimal `retrieve → respond` graph) — **current phase**
 2. Medical-advice guardrail + on-topic fallback
 3. Navigation CTAs
 4. Widget embed polish, streaming
@@ -80,4 +92,12 @@ npx prisma migrate dev
 npm install
 npm run dev:api              # Express on :4001
 npm run dev:admin            # Next.js on :3000
+
+# Phase 1: manual ingestion (no admin upload UI until Phase 5)
+npm run ingest --workspace=packages/api -- <filePath> [siteId]   # omit siteId for a global document
+npm run eval --workspace=packages/api -- <siteId>                 # recall@k / MRR against that site's golden set
 ```
+
+Both `ingest` and `eval` need a real `OPENAI_API_KEY` in `.env` (embeddings + batched enrichment /
+generation all go through OpenAI). Set `OPENAI_BASE_URL` to point at a compatible mock/gateway instead
+if you need to exercise the pipeline without burning real API calls.

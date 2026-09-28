@@ -18,4 +18,16 @@ export const config = {
     windowMs: Number(requireEnv("RATE_LIMIT_WINDOW_MS", "60000")),
     maxRequests: Number(requireEnv("RATE_LIMIT_MAX_REQUESTS", "30")),
   },
+  openai: {
+    // Deliberately not validated here — the server (health checks, non-LLM
+    // routes) must still boot without a key configured. The OpenAI client
+    // (services/openai-client.ts) is constructed lazily and fails at first
+    // actual use instead, which is the boundary that actually needs it.
+    apiKey: process.env.OPENAI_API_KEY ?? "",
+    chatModel: requireEnv("OPENAI_CHAT_MODEL", "gpt-4o-mini"),
+    embeddingModel: requireEnv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small"),
+    // Optional — an Azure-OpenAI-compatible gateway or self-hosted endpoint.
+    // Unset uses the SDK's own default (OpenAI's public API).
+    baseUrl: process.env.OPENAI_BASE_URL,
+  },
 };
