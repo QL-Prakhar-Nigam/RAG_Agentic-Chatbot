@@ -1,6 +1,7 @@
 import { installDefaultBridge } from "./agent-bridge.js";
 import { createWidgetUI } from "./ui.js";
 import { sendChatMessage } from "./api.js";
+import { appendToTranscript, loadTranscript } from "./transcript.js";
 
 const SESSION_STORAGE_KEY = "rag_chatbot_session_id";
 
@@ -47,12 +48,16 @@ function boot(): void {
 
   async function handleSend(message: string): Promise<void> {
     ui.appendMessage("user", message);
+    appendToTranscript({ role: "user", content: message });
     ui.setLoading(true);
     try {
       // clientActions is always [] today — nothing to render yet (Phase 3 adds `navigate`).
       const response = await sendChatMessage({ apiBase, siteId, sessionId, message });
       ui.appendMessage("assistant", response.responseText);
+      appendToTranscript({ role: "assistant", content: response.responseText });
     } catch (err) {
+      // Deliberately not persisted — a stale error on the next reload would be
+      // actively misleading (it may no longer apply), unlike a real turn.
       ui.appendError(
         err instanceof Error ? err.message : "Something went wrong. Please try again."
       );
@@ -62,6 +67,13 @@ function boot(): void {
   }
 
   const ui = createWidgetUI(handleSend);
+
+  // Replay any prior turns from this tab's session — the backend already
+  // remembers them (Redis-checkpointed by sessionId); this just restores what
+  // was visibly on screen before the reload.
+  for (const entry of loadTranscript()) {
+    ui.appendMessage(entry.role, entry.content);
+  }
 }
 
 if (document.readyState === "loading") {

@@ -187,3 +187,98 @@ describe("widget boot + send flow", () => {
     expect(errorSpy).toHaveBeenCalled();
   });
 });
+
+describe("widget transcript persistence (survives a reload)", () => {
+  it("persists both sides of a turn to sessionStorage", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ responseText: "Hello from KB", clientActions: [], sessionId: "s1" }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await bootWidget();
+    (document.querySelector(".rcb-toggle") as HTMLButtonElement).click();
+    const input = document.querySelector(".rcb-input") as HTMLInputElement;
+    input.value = "What are your hours?";
+    (document.querySelector(".rcb-send") as HTMLButtonElement).click();
+    await flushPromises();
+
+    expect(JSON.parse(sessionStorage.getItem("rag_chatbot_messages")!)).toEqual([
+      { role: "user", content: "What are your hours?" },
+      { role: "assistant", content: "Hello from KB" },
+    ]);
+  });
+
+  it("does not persist a failed turn's error", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: async () => ({ error: { message: "boom" } }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await bootWidget();
+    (document.querySelector(".rcb-toggle") as HTMLButtonElement).click();
+    const input = document.querySelector(".rcb-input") as HTMLInputElement;
+    input.value = "hi";
+    (document.querySelector(".rcb-send") as HTMLButtonElement).click();
+    await flushPromises();
+
+    // The user's half of the turn is still real and worth keeping; only the
+    // failed assistant side (which errored, not answered) is absent.
+    expect(JSON.parse(sessionStorage.getItem("rag_chatbot_messages")!)).toEqual([
+      { role: "user", content: "hi" },
+    ]);
+  });
+
+  it("replays a prior transcript into the DOM on a fresh boot (simulated reload)", async () => {
+    sessionStorage.setItem(
+      "rag_chatbot_messages",
+      JSON.stringify([
+        { role: "user", content: "first question" },
+        { role: "assistant", content: "first answer" },
+      ])
+    );
+    vi.stubGlobal(
+      "fetch",
+      vi
+        .fn()
+        .mockResolvedValue({
+          ok: true,
+          json: async () => ({ responseText: "", clientActions: [] }),
+        })
+    );
+
+    await bootWidget();
+
+    const userMsgs = document.querySelectorAll(".rcb-msg-user");
+    const assistantMsgs = document.querySelectorAll(".rcb-msg-assistant");
+    expect(userMsgs).toHaveLength(1);
+    expect(userMsgs[0].textContent).toBe("first question");
+    expect(assistantMsgs).toHaveLength(1);
+    expect(assistantMsgs[0].textContent).toBe("first answer");
+  });
+
+  it("still reuses the same sessionId across a reload, independent of the transcript", async () => {
+    sessionStorage.setItem("rag_chatbot_session_id", "existing-session");
+    sessionStorage.setItem(
+      "rag_chatbot_messages",
+      JSON.stringify([{ role: "user", content: "earlier" }])
+    );
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ responseText: "ok", clientActions: [], sessionId: "existing-session" }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await bootWidget();
+    (document.querySelector(".rcb-toggle") as HTMLButtonElement).click();
+    const input = document.querySelector(".rcb-input") as HTMLInputElement;
+    input.value = "second message";
+    (document.querySelector(".rcb-send") as HTMLButtonElement).click();
+    await flushPromises();
+
+    const body = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string);
+    expect(body.sessionId).toBe("existing-session");
+  });
+});
