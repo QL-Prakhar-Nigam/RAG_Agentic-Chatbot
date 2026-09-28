@@ -48,6 +48,19 @@ navigation, if ever needed, is a deliberate future feature, not an accidental on
 Same embed model as a proven prior system: a zero-dependency vanilla JS IIFE bundle, injected directly
 into the host page's DOM (no iframe), embedded via a single script tag. Contract with the host page:
 
+**How the file gets to the browser — also matching the prior system's model.** The API serves the built
+bundle itself, at `/widget.js` (`express.static`, wired in `packages/api/src/index.ts`). One file is
+served to every site — there's no per-site build — because site identity travels in the `<script>` tag's
+`data-site-id` attribute, read at runtime, not baked into the bundle at build time. The widget reads its
+own API origin off that same script tag's resolved `src`, so the common case needs only one attribute:
+
+```html
+<script src="http://your-api-host/widget.js" data-site-id="..." defer></script>
+```
+
+An explicit `data-api-base` attribute overrides the origin-detection when the script is ever served from
+somewhere other than the API itself (a CDN, in a later iteration) — not needed for the common case today.
+
 ```typescript
 window.agentBridge = {
   getCurrentPage: () => string

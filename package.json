@@ -15,7 +15,7 @@
     "lint": "npm run lint --workspaces --if-present",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "dev:api": "npm run dev --workspace=packages/api",
+    "dev:api": "npm run build --workspace=packages/widget && npm run dev --workspace=packages/api",
     "dev:admin": "npm run dev --workspace=packages/admin",
     "dev:widget": "npm run dev --workspace=packages/widget",
     "prisma:generate": "prisma generate",

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Widget demo host page</title>
+  </head>
+  <body>
+    <!-- Stand-in for a real client site page — the widget should embed cleanly
+         alongside arbitrary unrelated content without interfering with it. -->
+    <h1>Example Hospital Site</h1>
+    <p>
+      This is a placeholder host page, unrelated to the widget, used to manually verify the embed.
+    </p>
+
+    <!-- The API serves the built widget bundle itself at /widget.js
+         (packages/api/src/index.ts) — `npm run dev:api` builds packages/widget
+         first, so this is always up to date. No data-api-base needed: the
+         widget reads its own API origin off this script tag's src. Open this
+         file directly (any way you like — file://, a static server, whatever)
+         once the API is running. -->
+    <script
+      src="http://localhost:4001/widget.js"
+      data-site-id="REPLACE_WITH_A_REAL_SITE_ID"
+      defer
+    ></script>
+  </body>
+</html>

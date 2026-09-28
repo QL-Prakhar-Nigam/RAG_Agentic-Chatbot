@@ -59,6 +59,15 @@ workspaces.
 - **`/internal/sites` and `/internal/documents` have no auth** (Phase 1.5) — a deliberate, discussed
   choice, not an oversight, closed by Phase 5's real admin auth applied on top of these same endpoints.
   Must not be reachable from anywhere but local dev until then.
+- **The API serves the built widget bundle itself, at `/widget.js`** — one file for every site (site
+  identity travels in the embedding `<script>` tag's `data-site-id`, read at runtime, never baked into
+  the build). `main.ts` reads its own API origin off that same script tag's resolved `src` property
+  (not `getAttribute("src")` — the browser resolves `.src` to an absolute URL automatically); an explicit
+  `data-api-base` attribute overrides this when needed. Pulled forward from Phase 4, matching the prior
+  reference system's widget-serving model — see `01-architecture.md`'s "Widget / embed model". `npm run
+dev:api` always builds `packages/widget` first so the served file can't go stale; that rebuild doesn't
+  hot-reload while the API is already running — rebuild the widget + refresh the browser instead of
+  restarting the API when iterating on widget UI.
 
 ## Repo layout
 
@@ -77,10 +86,12 @@ See `local/planning/06-phased-plan.md` for full detail and exit criteria.
 
 0. Repo scaffold — done
 1. RAG core (ingestion, hybrid retrieval, eval harness, minimal `retrieve → respond` graph) — done
-   1.5. Minimal admin slice (site create + doc upload, no auth — pulled forward from Phase 5) — **current phase**
-2. Medical-advice guardrail + on-topic fallback
+   1.5. Minimal admin slice (site create + doc upload, no auth — pulled forward from Phase 5) — done
+   Also done, pulled forward from Phase 4: a bare-bones widget chat UI, and serving its bundle from the
+   API at `/widget.js` with `apiBase` auto-detected — see the invariant above.
+2. Medical-advice guardrail + on-topic fallback — **next up**
 3. Navigation CTAs
-4. Widget embed polish, streaming
+4. Widget embed polish (remaining scope: CORS/origin enforcement, branding, streaming)
 5. Admin panel (auth + everything 1.5 didn't cover: route mgmt, conversation logs, site edit/branding)
 6. Structured responses (deprioritized)
 7. Hardening pass
@@ -94,8 +105,8 @@ docker compose up -d        # Postgres+pgvector on :5434, Redis on :6380 (ports 
 cp .env.example .env         # already present in this repo for local dev
 npx prisma migrate dev
 npm install
-npm run dev:api              # Express on :4001
-npm run dev:admin            # Next.js on :3000 — create sites + upload documents here (Phase 1.5)
+npm run dev:api              # builds packages/widget first, then Express on :4001 (serves /widget.js too)
+npm run dev:admin            # Next.js on :4000 — create sites + upload documents here (Phase 1.5)
 
 # eval harness — no admin UI for this yet
 npm run eval --workspace=packages/api -- <siteId>   # recall@k / MRR against that site's golden set

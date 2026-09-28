@@ -1,4 +1,6 @@
 import "./env.js";
+import { fileURLToPath } from "node:url";
+import path from "node:path";
 import cors from "cors";
 import express from "express";
 import { config } from "./config.js";
@@ -16,6 +18,20 @@ app.use(express.json());
 // anywhere else. Per-site Origin validation happens server-side, per request,
 // once Site.allowedOrigins exists (Phase 4). See local/planning/01-architecture.md.
 app.use(cors({ origin: "*" }));
+
+// Serves the built widget bundle at /widget.js — one file for every site
+// (site identity is read from the embedding <script> tag's data-site-id at
+// runtime, not baked into the build). Resolved from this module's own
+// location, not cwd, same reasoning as kb/parse.ts's tokenizer path and
+// env.ts's root-.env path — correct whether running from src/ under tsx or
+// compiled dist/ in production, since both sit one level inside packages/api.
+// 404s (not a crash) if packages/widget hasn't been built yet.
+// See local/planning/01-architecture.md's "Widget / embed model".
+const widgetDistPath = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "../../widget/dist"
+);
+app.use(express.static(widgetDistPath));
 
 app.use(healthRouter);
 app.use(chatRouter);

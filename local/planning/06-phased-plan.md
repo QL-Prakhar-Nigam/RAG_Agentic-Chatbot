@@ -65,11 +65,15 @@ here.
 
 ## Phase 4 — Widget embed polish
 
-- Script-tag embed, `agentBridge` contract, CORS + per-site origin allowlist enforcement.
-- Basic branding (name/logo/color pulled from `Site`).
+Script-tag embed, `agentBridge` contract, and serving the bundle from the API (one file for every site,
+`apiBase` auto-detected from the script tag's own `src`) are already done — pulled forward during the
+bare-bones widget pass, see `01-architecture.md`'s "Widget / embed model". What's left here:
+
+- CORS + per-site origin allowlist enforcement (`Site.allowedOrigins` exists as a column and is
+  collected at site-creation time; nothing reads it yet).
+- Basic branding (name/logo/color pulled from `Site`) — needs its own config-fetch endpoint, not built.
 - Streaming (`/chat/stream`, SSE) — see `03-langgraph-design.md`.
-- **Exit criteria:** the widget embeds cleanly on a real test page for a configured site, respects that
-  site's allowed origins, and streams responses.
+- **Exit criteria:** the widget respects a site's allowed origins and streams responses.
 
 ## Phase 5 — Admin panel
 
