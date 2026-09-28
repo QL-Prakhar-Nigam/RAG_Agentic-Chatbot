@@ -17,6 +17,7 @@
     "format:check": "prettier --check .",
     "dev:api": "npm run dev --workspace=packages/api",
     "dev:admin": "npm run dev --workspace=packages/admin",
+    "dev:widget": "npm run dev --workspace=packages/widget",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev"
   },

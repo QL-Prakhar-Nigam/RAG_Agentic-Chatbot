@@ -25,6 +25,24 @@ are solid, per direct product guidance.
 - **Exit criteria:** uploading a real document through the pipeline and asking a question about it
   returns a grounded answer; eval harness runs and reports numbers (even if not yet tuned against).
 
+## Phase 1.5 — Minimal admin slice (pulled forward from Phase 5)
+
+Not in the original ordering — pulled forward mid-Phase-1 because testing every subsequent phase by
+hand-inserting `Site` rows via `psql` and uploading documents via a CLI script was real, avoidable
+friction for whoever is verifying each phase. Only the two pieces that unblock that: creating a site and
+uploading a document to it. Everything else that belongs to the admin panel (auth, route management, the
+conversation log viewer, branding/personality editing) stays in Phase 5, not duplicated or foreshadowed
+here.
+
+- `GET`/`POST /internal/sites`, `GET`/`POST /internal/documents` (multipart upload, wired to the
+  existing ingestion pipeline) — see `07-api-contracts.md`.
+- A minimal Next.js dashboard: create a site, see its `siteId` (copyable, not something to go dig out of
+  Postgres), upload a document to it or as a global document, see what's already been uploaded.
+- **Explicitly no auth on these endpoints** — a deliberate, discussed choice (not an oversight), closed
+  by Phase 5's real admin auth. Must not be reachable from anywhere but local dev until then.
+- **Exit criteria:** an admin can create a site and upload a document through the browser, without
+  touching SQL or the CLI.
+
 ## Phase 2 — Medical-advice guardrail + on-topic fallback
 
 - `medicalGuard` node, wired first in the graph per `03-langgraph-design.md`.
@@ -55,9 +73,14 @@ are solid, per direct product guidance.
 
 ## Phase 5 — Admin panel
 
-- Single-admin auth.
-- Site management (create/edit properties, origins, branding).
-- Knowledge base upload/management (per-site and global).
+Site creation and document upload already exist from Phase 1.5 — this phase adds auth in front of them
+(closing that phase's deliberately-left-open gap) plus everything that didn't make sense to pull
+forward early.
+
+- Single-admin auth — applied to the Phase 1.5 endpoints too, not just new ones.
+- Site management: edit (not just create) — properties, origins, branding.
+- Knowledge base upload/management: document delete, "mark as global" toggle (Phase 1.5 only supports
+  choosing global vs. per-site at upload time, not changing it after).
 - Route management (CRUD).
 - Conversation log viewer (read-only).
 - **Exit criteria:** an admin can, without touching the database directly, create a new site, upload a

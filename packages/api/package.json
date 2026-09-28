@@ -23,6 +23,7 @@
     "docling.rs": "^1.69.1",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "multer": "^2.4.0",
     "openai": "^7.23.0",
     "redis": "^4.7.0",
     "zod": "^3.25.32"
@@ -30,6 +31,7 @@
   "devDependencies": {
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
+    "@types/multer": "^2.2.0",
     "@types/node": "^22.10.2",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",

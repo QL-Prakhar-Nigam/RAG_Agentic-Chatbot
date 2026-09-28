@@ -58,7 +58,48 @@ type ClientAction =
 
 ## Internal endpoints (admin → API)
 
-Mirrors the pattern of the request/response shapes above — not fully specified yet, since the admin
-panel is Phase 5. Worth deciding before that phase starts, not during it: document upload (→ ingestion
-pipeline, `02-rag-architecture.md`), route CRUD, site CRUD, and conversation-log listing all need their
-own small contracts here, added to this file as each is built rather than left implicit in route code.
+Route CRUD and conversation-log listing don't exist yet (Phase 5, along with auth in front of all of
+these). Site CRUD (create/list only — no edit yet) and document upload/listing were pulled forward to
+Phase 1.5 to unblock manual testing of later phases; contracts below.
+
+**None of these are authenticated yet** — a deliberate, discussed gap (not an oversight), closed by
+Phase 5. Must not be reachable from anywhere but local dev until then.
+
+### `GET /internal/sites`
+
+Returns every `Site` row (id, name, allowedOrigins, branding fields, createdAt) — no pagination, no
+per-site scoping (there's exactly one admin, who can see every site).
+
+### `POST /internal/sites`
+
+```typescript
+// Request
+{ name: string; allowedOrigins: string[] }   // allowedOrigins: at least one entry
+
+// Response: the created Site row
+```
+
+### `POST /internal/documents`
+
+`multipart/form-data`, not JSON — this is a file upload, wired straight to the ingestion pipeline in
+`02-rag-architecture.md`.
+
+```
+file: <the document>
+siteId: string   // optional form field — omitted or empty = global document
+```
+
+```typescript
+// Response
+{ documentId: string; chunkCount: number }
+```
+
+### `GET /internal/documents?siteId=`
+
+Lists documents for one site, or — with `siteId` omitted — the global documents (`siteId IS NULL`), not
+"every document across every site." The admin UI shows these as separate sections for that reason.
+
+```typescript
+// Response
+{ id: string; fileName: string; createdAt: string; chunkCount: number }[]
+```

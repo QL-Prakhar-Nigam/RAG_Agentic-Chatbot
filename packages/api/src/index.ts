@@ -5,6 +5,8 @@ import { config } from "./config.js";
 import { errorHandler, notFoundHandler } from "./middleware/error-handler.js";
 import { healthRouter } from "./routes/health.js";
 import { chatRouter } from "./routes/chat.js";
+import { sitesRouter } from "./routes/sites.js";
+import { documentsRouter } from "./routes/documents.js";
 
 const app = express();
 
@@ -17,6 +19,8 @@ app.use(cors({ origin: "*" }));
 
 app.use(healthRouter);
 app.use(chatRouter);
+app.use(sitesRouter);
+app.use(documentsRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

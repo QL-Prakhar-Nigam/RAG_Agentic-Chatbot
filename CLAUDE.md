@@ -56,6 +56,9 @@ workspaces.
   absolute path in `kb/parse.ts` — deliberately not cwd-relative, and small enough not to need the
   fetch-at-install pattern the PDF/OCR ONNX models use. PDF/image ingestion isn't wired up yet — that
   needs the separate (large) ONNX model download `docling.rs`'s README describes, not done in Phase 1.
+- **`/internal/sites` and `/internal/documents` have no auth** (Phase 1.5) — a deliberate, discussed
+  choice, not an oversight, closed by Phase 5's real admin auth applied on top of these same endpoints.
+  Must not be reachable from anywhere but local dev until then.
 
 ## Repo layout
 
@@ -73,11 +76,12 @@ prisma/     ← schema.prisma + hand-written migrations (vector/tsvector columns
 See `local/planning/06-phased-plan.md` for full detail and exit criteria.
 
 0. Repo scaffold — done
-1. RAG core (ingestion, hybrid retrieval, eval harness, minimal `retrieve → respond` graph) — **current phase**
+1. RAG core (ingestion, hybrid retrieval, eval harness, minimal `retrieve → respond` graph) — done
+   1.5. Minimal admin slice (site create + doc upload, no auth — pulled forward from Phase 5) — **current phase**
 2. Medical-advice guardrail + on-topic fallback
 3. Navigation CTAs
 4. Widget embed polish, streaming
-5. Admin panel
+5. Admin panel (auth + everything 1.5 didn't cover: route mgmt, conversation logs, site edit/branding)
 6. Structured responses (deprioritized)
 7. Hardening pass
 8. Future: tool-calling, multi-step `interrupt()` flows, billing — not scheduled
@@ -91,13 +95,15 @@ cp .env.example .env         # already present in this repo for local dev
 npx prisma migrate dev
 npm install
 npm run dev:api              # Express on :4001
-npm run dev:admin            # Next.js on :3000
+npm run dev:admin            # Next.js on :3000 — create sites + upload documents here (Phase 1.5)
 
-# Phase 1: manual ingestion (no admin upload UI until Phase 5)
-npm run ingest --workspace=packages/api -- <filePath> [siteId]   # omit siteId for a global document
-npm run eval --workspace=packages/api -- <siteId>                 # recall@k / MRR against that site's golden set
+# eval harness — no admin UI for this yet
+npm run eval --workspace=packages/api -- <siteId>   # recall@k / MRR against that site's golden set
+
+# CLI ingestion still works too (useful for scripting), but the admin UI is the easier path now
+npm run ingest --workspace=packages/api -- <filePath> [siteId]
 ```
 
-Both `ingest` and `eval` need a real `OPENAI_API_KEY` in `.env` (embeddings + batched enrichment /
-generation all go through OpenAI). Set `OPENAI_BASE_URL` to point at a compatible mock/gateway instead
-if you need to exercise the pipeline without burning real API calls.
+Both need a real `OPENAI_API_KEY` in `.env` (embeddings + batched enrichment/generation all go through
+OpenAI). Set `OPENAI_BASE_URL` to point at a compatible mock/gateway instead if you need to exercise the
+pipeline without burning real API calls.
