@@ -42,7 +42,7 @@ describe("widget boot + send flow", () => {
     await bootWidget();
     (document.querySelector(".rcb-toggle") as HTMLButtonElement).click();
 
-    const input = document.querySelector(".rcb-input") as HTMLInputElement;
+    const input = document.querySelector(".rcb-input") as HTMLTextAreaElement;
     input.value = "What are your hours?";
     (document.querySelector(".rcb-send") as HTMLButtonElement).click();
     await flushPromises();
@@ -73,7 +73,7 @@ describe("widget boot + send flow", () => {
 
     await bootWidget();
     (document.querySelector(".rcb-toggle") as HTMLButtonElement).click();
-    const input = document.querySelector(".rcb-input") as HTMLInputElement;
+    const input = document.querySelector(".rcb-input") as HTMLTextAreaElement;
     const sendBtn = document.querySelector(".rcb-send") as HTMLButtonElement;
 
     input.value = "first";
@@ -104,7 +104,7 @@ describe("widget boot + send flow", () => {
 
     await bootWidget();
     (document.querySelector(".rcb-toggle") as HTMLButtonElement).click();
-    const input = document.querySelector(".rcb-input") as HTMLInputElement;
+    const input = document.querySelector(".rcb-input") as HTMLTextAreaElement;
     input.value = "hi";
     (document.querySelector(".rcb-send") as HTMLButtonElement).click();
     await flushPromises();
@@ -123,7 +123,7 @@ describe("widget boot + send flow", () => {
     // No data-api-base — matches the API now serving this file itself at /widget.js.
     await bootWidget({ "data-site-id": "site-1", src: "http://widget-host.test/widget.js" });
     (document.querySelector(".rcb-toggle") as HTMLButtonElement).click();
-    const input = document.querySelector(".rcb-input") as HTMLInputElement;
+    const input = document.querySelector(".rcb-input") as HTMLTextAreaElement;
     input.value = "hi";
     (document.querySelector(".rcb-send") as HTMLButtonElement).click();
     await flushPromises();
@@ -147,7 +147,7 @@ describe("widget boot + send flow", () => {
       src: "http://widget-host.test/widget.js",
     });
     (document.querySelector(".rcb-toggle") as HTMLButtonElement).click();
-    const input = document.querySelector(".rcb-input") as HTMLInputElement;
+    const input = document.querySelector(".rcb-input") as HTMLTextAreaElement;
     input.value = "hi";
     (document.querySelector(".rcb-send") as HTMLButtonElement).click();
     await flushPromises();
@@ -167,7 +167,7 @@ describe("widget boot + send flow", () => {
 
     await bootWidget({ "data-site-id": "site-1" }); // no src, no data-api-base
     (document.querySelector(".rcb-toggle") as HTMLButtonElement).click();
-    const input = document.querySelector(".rcb-input") as HTMLInputElement;
+    const input = document.querySelector(".rcb-input") as HTMLTextAreaElement;
     input.value = "hi";
     (document.querySelector(".rcb-send") as HTMLButtonElement).click();
     await flushPromises();
@@ -198,7 +198,7 @@ describe("widget transcript persistence (survives a reload)", () => {
 
     await bootWidget();
     (document.querySelector(".rcb-toggle") as HTMLButtonElement).click();
-    const input = document.querySelector(".rcb-input") as HTMLInputElement;
+    const input = document.querySelector(".rcb-input") as HTMLTextAreaElement;
     input.value = "What are your hours?";
     (document.querySelector(".rcb-send") as HTMLButtonElement).click();
     await flushPromises();
@@ -219,7 +219,7 @@ describe("widget transcript persistence (survives a reload)", () => {
 
     await bootWidget();
     (document.querySelector(".rcb-toggle") as HTMLButtonElement).click();
-    const input = document.querySelector(".rcb-input") as HTMLInputElement;
+    const input = document.querySelector(".rcb-input") as HTMLTextAreaElement;
     input.value = "hi";
     (document.querySelector(".rcb-send") as HTMLButtonElement).click();
     await flushPromises();
@@ -241,12 +241,10 @@ describe("widget transcript persistence (survives a reload)", () => {
     );
     vi.stubGlobal(
       "fetch",
-      vi
-        .fn()
-        .mockResolvedValue({
-          ok: true,
-          json: async () => ({ responseText: "", clientActions: [] }),
-        })
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ responseText: "", clientActions: [] }),
+      })
     );
 
     await bootWidget();
@@ -273,7 +271,7 @@ describe("widget transcript persistence (survives a reload)", () => {
 
     await bootWidget();
     (document.querySelector(".rcb-toggle") as HTMLButtonElement).click();
-    const input = document.querySelector(".rcb-input") as HTMLInputElement;
+    const input = document.querySelector(".rcb-input") as HTMLTextAreaElement;
     input.value = "second message";
     (document.querySelector(".rcb-send") as HTMLButtonElement).click();
     await flushPromises();

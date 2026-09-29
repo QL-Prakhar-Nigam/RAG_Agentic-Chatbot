@@ -45,3 +45,54 @@ describe("createWidgetUI message rendering", () => {
     expect(errorMsg.textContent).toBe("**not bold** [not a link](https://example.com)");
   });
 });
+
+describe("createWidgetUI panel open/close", () => {
+  it("starts closed", () => {
+    createWidgetUI(() => {});
+    expect(document.querySelector(".rcb-panel")!.classList.contains("rcb-panel-open")).toBe(false);
+  });
+
+  it("toggles open and closed on repeated bubble clicks", () => {
+    createWidgetUI(() => {});
+    const toggle = document.querySelector(".rcb-toggle") as HTMLButtonElement;
+    const panel = document.querySelector(".rcb-panel")!;
+
+    toggle.click();
+    expect(panel.classList.contains("rcb-panel-open")).toBe(true);
+    toggle.click();
+    expect(panel.classList.contains("rcb-panel-open")).toBe(false);
+  });
+
+  it("closes via the header close button", () => {
+    createWidgetUI(() => {});
+    const toggle = document.querySelector(".rcb-toggle") as HTMLButtonElement;
+    const closeBtn = document.querySelector(".rcb-close") as HTMLButtonElement;
+    const panel = document.querySelector(".rcb-panel")!;
+
+    toggle.click();
+    expect(panel.classList.contains("rcb-panel-open")).toBe(true);
+    closeBtn.click();
+    expect(panel.classList.contains("rcb-panel-open")).toBe(false);
+  });
+});
+
+describe("createWidgetUI input", () => {
+  it("sends on Enter but inserts a newline on Shift+Enter", () => {
+    const sent: string[] = [];
+    createWidgetUI((msg) => sent.push(msg));
+    const input = document.querySelector(".rcb-input") as HTMLTextAreaElement;
+
+    input.value = "line one";
+    input.dispatchEvent(
+      new KeyboardEvent("keydown", { key: "Enter", shiftKey: true, cancelable: true })
+    );
+    // Shift+Enter must not clear the input or send — a real newline is the
+    // browser's own default keydown behavior, only suppressed for plain Enter.
+    expect(sent).toEqual([]);
+    expect(input.value).toBe("line one");
+
+    input.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", cancelable: true }));
+    expect(sent).toEqual(["line one"]);
+    expect(input.value).toBe("");
+  });
+});
