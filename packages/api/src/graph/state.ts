@@ -1,6 +1,6 @@
 import { Annotation } from "@langchain/langgraph";
 import type { ChatMessage, ClientAction } from "@rag-chatbot/shared";
-import type { KbSearchResult } from "../retrieval/types.js";
+import type { ExpandedChunk, KbSearchResult } from "../retrieval/types.js";
 
 // Phase 1 subset of the full GraphState in local/planning/03-langgraph-design.md
 // — medicalRedirect/routeCandidates/ctaCandidates are added in Phase 2/3, not
@@ -22,6 +22,13 @@ export const GraphAnnotation = Annotation.Root({
   }),
 
   kbResults: Annotation<KbSearchResult[]>({ reducer: overwrite, default: () => [] }),
+
+  // kbResults after small-to-big expansion + the context budget — what
+  // respond actually renders into the prompt. Kept separate from kbResults
+  // so responseMode still decides purely from whether anything matched, not
+  // from the (possibly larger) expanded set. See
+  // local/planning/02-rag-architecture.md.
+  contextChunks: Annotation<ExpandedChunk[]>({ reducer: overwrite, default: () => [] }),
 
   responseMode: Annotation<"answer" | "fallback" | undefined>({
     reducer: overwrite,

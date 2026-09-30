@@ -18,16 +18,24 @@ export const config = {
     windowMs: Number(requireEnv("RATE_LIMIT_WINDOW_MS", "60000")),
     maxRequests: Number(requireEnv("RATE_LIMIT_MAX_REQUESTS", "30")),
   },
-  openai: {
-    // Deliberately not validated here — the server (health checks, non-LLM
-    // routes) must still boot without a key configured. The OpenAI client
-    // (services/openai-client.ts) is constructed lazily and fails at first
-    // actual use instead, which is the boundary that actually needs it.
-    apiKey: process.env.OPENAI_API_KEY ?? "",
-    chatModel: requireEnv("OPENAI_CHAT_MODEL", "gpt-4o-mini"),
-    embeddingModel: requireEnv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small"),
-    // Optional — an Azure-OpenAI-compatible gateway or self-hosted endpoint.
-    // Unset uses the SDK's own default (OpenAI's public API).
-    baseUrl: process.env.OPENAI_BASE_URL,
-  },
+  openai: (() => {
+    const chatModel = requireEnv("OPENAI_CHAT_MODEL", "gpt-4o-mini");
+    return {
+      // Deliberately not validated here — the server (health checks, non-LLM
+      // routes) must still boot without a key configured. The OpenAI client
+      // (services/openai-client.ts) is constructed lazily and fails at first
+      // actual use instead, which is the boundary that actually needs it.
+      apiKey: process.env.OPENAI_API_KEY ?? "",
+      chatModel,
+      embeddingModel: requireEnv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small"),
+      // Query rewrite (retrieval/query-rewrite.ts) is a narrow, single-purpose
+      // call — cheap to point at a smaller/faster model independently of the
+      // main answer-writing model. Defaults to chatModel, i.e. no behavior
+      // change, until OPENAI_REWRITE_MODEL is explicitly set.
+      rewriteModel: requireEnv("OPENAI_REWRITE_MODEL", chatModel),
+      // Optional — an Azure-OpenAI-compatible gateway or self-hosted endpoint.
+      // Unset uses the SDK's own default (OpenAI's public API).
+      baseUrl: process.env.OPENAI_BASE_URL,
+    };
+  })(),
 };

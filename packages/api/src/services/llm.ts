@@ -10,6 +10,8 @@ interface ChatCompleteOptions {
   timeoutMs?: number;
   /** Ask the provider to return a raw JSON object instead of free text. */
   jsonMode?: boolean;
+  /** Overrides config.openai.chatModel for this call — e.g. a cheaper model for a narrow, single-purpose call like query rewrite. */
+  model?: string;
 }
 
 // The single seam all LLM calls in this repo go through — model choice and
@@ -21,7 +23,7 @@ export async function chatComplete(
   const client = getOpenAIClient();
   const response = await client.chat.completions.create(
     {
-      model: config.openai.chatModel,
+      model: options.model ?? config.openai.chatModel,
       messages,
       ...(options.jsonMode ? { response_format: { type: "json_object" as const } } : {}),
     },

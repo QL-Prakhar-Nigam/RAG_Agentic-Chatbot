@@ -14,6 +14,7 @@ interface RawRow {
   sectionPath: string | null;
   summary: string | null;
   documentId: string | null;
+  chunkIndex: number;
 }
 
 async function vectorSearch(
@@ -23,7 +24,7 @@ async function vectorSearch(
 ): Promise<RawRow[]> {
   const vectorLiteral = `[${queryEmbedding.join(",")}]`;
   return prisma.$queryRaw<RawRow[]>`
-    SELECT id, content, "sectionPath", summary, "documentId"
+    SELECT id, content, "sectionPath", summary, "documentId", "chunkIndex"
     FROM "KbChunk"
     WHERE ("siteId" = ${siteId} OR "siteId" IS NULL) AND embedding IS NOT NULL
     ORDER BY embedding <=> ${vectorLiteral}::vector
@@ -33,7 +34,7 @@ async function vectorSearch(
 
 async function keywordSearch(siteId: string, queryText: string, limit: number): Promise<RawRow[]> {
   return prisma.$queryRaw<RawRow[]>`
-    SELECT id, content, "sectionPath", summary, "documentId"
+    SELECT id, content, "sectionPath", summary, "documentId", "chunkIndex"
     FROM "KbChunk"
     WHERE ("siteId" = ${siteId} OR "siteId" IS NULL)
       AND "searchVector" @@ websearch_to_tsquery('english', ${queryText})
@@ -72,6 +73,7 @@ export async function searchKb(siteId: string, queryText: string): Promise<KbSea
     sectionPath: item.sectionPath,
     summary: item.summary,
     documentId: item.documentId,
+    chunkIndex: item.chunkIndex,
     score,
   }));
 
